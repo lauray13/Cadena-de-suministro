@@ -1,0 +1,30 @@
+install.packages("lubridate")
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+
+#Crear columna week apartir de la fecha de facturación
+
+retail_clean_csv$week <- week(retail_clean_csv$InvoiceDate)
+
+#Crear columna month apartir de la fecha de facturación
+
+retail_clean_csv$month <- month(retail_clean_csv$InvoiceDate)
+
+#Crear columna year apartir de la fecha de facturación
+
+retail_clean_csv$year <- year(retail_clean_csv$InvoiceDate)
+
+times_series <- retail_clean_csv %>%
+  group_by(week, month, year) %>%
+  summarise(date = mean(InvoiceDate),
+            Revenue = sum(Revenue, na.rm = TRUE)) %>%
+  arrange(date)
+
+View(times_series)
+
+## Guardar el archivo en un excel
+
+library(openxlsx)
+write.xlsx(times_series, "time_series2.xlsx")
+getwd()
