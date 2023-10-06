@@ -1,0 +1,29 @@
+install.packages('lubridate')
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+
+time_series2 %>% ggplot(aes(x=date, y=Revenue)) +
+  geom_line() ## Gráfico
+time_series2$date<- as.Date(time_series2$date) #Convierto a formato fecha
+
+# Creamos la columna Trend
+
+time_series2$trend <- seq(1:nrow(time_series2))
+nrow(time_series2)
+
+time_series2$month <- month(time_series2$date, label = TRUE) #Reemplazo de numeros a letra ej: 12 = dic, tomando en cuenta la columna month
+time_series2$dayofmonth <- day(time_series2$date) # Se agrego una columa con el Nro de día
+time_series2 <- time_series2 %>% 
+  mutate(first_10 = ifelse(dayofmonth<=10,1,0))
+
+time_series2 <- time_series2 %>% 
+  mutate(second_10 = ifelse(dayofmonth >10 & dayofmonth <=20,1,0))
+
+time_series2 <- time_series2 %>% 
+  mutate(third_10 = ifelse(dayofmonth>20,1,0))
+
+model1 <- lm(Revenue~trend+first_10+second_10+third_10,data = time_series2)
+summary(model1)
+
+time_series2$prediction <- predict(model1, time_series2)
