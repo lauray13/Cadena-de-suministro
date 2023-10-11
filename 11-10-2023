@@ -1,0 +1,57 @@
+install.packages('lubridate')
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+
+time_series3 %>% ggplot(aes(x=date, y=Revenue)) +
+  geom_line() ## Gráfico
+time_series3$date<- as.Date(time_series3$date) #Convierto a formato fecha
+
+# Creamos la columna Trend
+
+time_series3$trend <- seq(1:nrow(time_series3))
+nrow(time_series3)
+
+time_series3$month <- month(time_series3$date, label = TRUE) #Reemplazo de numeros a letra ej: 12 = dic, tomando en cuenta la columna month
+time_series3$dayofmonth <- day(time_series3$date) # Se agrego una columa con el Nro de día
+time_series3 <- time_series3 %>% 
+  mutate(first_10 = ifelse(dayofmonth<=10,1,0))
+time_series3 <- time_series3 %>% 
+  mutate(second_10 = ifelse(dayofmonth >10 & dayofmonth <=20,1,0))
+
+time_series3 <- time_series3 %>% 
+  mutate(third_10 = ifelse(dayofmonth>20,1,0))
+
+model1 <- lm(Revenue~trend+first_10+second_10+third_10,data = time_series3)
+summary(model1)
+
+time_series3$prediction <- predict(model1, time_series3)
+
+future_dates <- seq.Date(from = max(time_series3$date) + 7, ## del la fecha mas nueva y le sumas 7 dias
+                         to = max(time_series3$date) + (7*16), ## indica que lo repita 16 veces que son las 16 semanas
+                         by = 7) ## y que vaya 7 en 7
+future_dates <- data.frame(date = future_dates)
+
+time_series3$type <- "History"
+View(future_dates)
+
+time_series3 <- rbind(time_series3,future_dates)
+
+time_series4 <- time_series3 %>% 
+  full_join(future_dates,
+            by = "date")
+
+time_series4$type[is.na(time_series4$type)== "TRUE"] <- "Forecast"
+
+##REDOING AGAIN
+time_series4$trend <- seq(1:nrow(time_series4))
+time_series4$month <- month(time_series4$date, label = TRUE) #Reemplazo de numeros a letra ej: 12 = dic, tomando en cuenta la columna month
+time_series4$dayofmonth <- day(time_series4$date) # Se agrego una columa con el Nro de día
+time_series4 <- time_series4 %>% 
+  mutate(first_10 = ifelse(dayofmonth<=10,1,0))
+time_series4 <- time_series4 %>% 
+  mutate(second_10 = ifelse(dayofmonth >10 & dayofmonth <=20,1,0))
+time_series4 <- time_series4 %>% 
+  mutate(third_10 = ifelse(dayofmonth>20,1,0))
+
+time_series4$prediction <- predict(model1, time_series4)
